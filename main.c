@@ -1,14 +1,6 @@
 #include "registers.h"
 
-#define GPIOA_BASE      0x48000000
-#define GPIOA_MODER     (*(volatile unsigned int *)(GPIOA_BASE + 0x00))
-#define GPIOA_BSRR      (*(volatile unsigned int *)(GPIOA_BASE + 0x18))
 
-#define GPIOC_BASE      0x48000800
-#define GPIOC_MODER     (*(volatile unsigned int *)(GPIOC_BASE + 0x00))
-#define GPIOC_PUPDR     (*(volatile unsigned int *)(GPIOC_BASE + 0x0C))
-#define GPIOC_IDR       (*(volatile unsigned int *)(GPIOC_BASE + 0x10))
-#define GPIOA_AFRL 	    (*(volatile unsigned int *)(GPIOA_BASE + 0x20))
 
 #define EXTI_BASE       0x40010400
 #define EXTI_IMR1       (*(volatile unsigned int *)(EXTI_BASE + 0x00))
@@ -42,10 +34,10 @@ void gpio_config(void)
 {
   RCC->AHB2ENR |= (1U << 0) | (1U << 2); // Enable Clocks for GPIOA (bit 0) and GPIOC (bit 2)
 
-  GPIOA_MODER &= ~(3U << (5 * 2)); //PA5 pin input mode erase
-  GPIOA_MODER |=  (1U << (5 * 2)); // PA5 Output mode
+  GPIOA->MODER &= ~(3U << (5 * 2)); //PA5 pin input mode erase
+  GPIOA->MODER |=  (1U << (5 * 2)); // PA5 Output mode
 
-  GPIOC_MODER &= ~(3U << (13 * 2)); //PC13 Input mode
+  GPIOC->MODER &= ~(3U << (13 * 2)); //PC13 Input mode
 }
 
 void interrupt_init(void) {
@@ -69,7 +61,7 @@ void interrupt_init(void) {
 void EXTI15_10_IRQHandler(void) {
     if (EXTI_PR1 & (1U << 13)) { // checks 13 bit
 
-        GPIOA_BSRR = (1U << 5); // turn on PA5
+        GPIOA->BSRR = (1U << 5); // turn on PA5
 
         EXTI_PR1 = (1U << 13); //write in PR1 1 -> write 1 to clean the flag
     }
@@ -82,10 +74,10 @@ void usart2_init(void)
 	RCC->APB1ENR1 |= (1U << 17); //enable peripheral clock for USART2
 	RCC->CCIPR &= ~(3U << 2);  //clear selected as USART2 clock
 	RCC->CCIPR |= (1U << 2); //HSI16 clock selected as USART2 clock
-  GPIOA_MODER &= ~(3U << (2 * 2)); //MODE2 clean
-  GPIOA_MODER |=  (2U << (2 * 2)); // MODE2 Alternate function mode (PA2 set as alternate)
-	GPIOA_AFRL &= ~(0xFU << 8); //clean alternate function of pin 2
-	GPIOA_AFRL |=(0x7U << 8); //set alternate function of pin 2 as USART2 TX
+  GPIOA->MODER &= ~(3U << (2 * 2)); //MODE2 clean
+  GPIOA->MODER |=  (2U << (2 * 2)); // MODE2 Alternate function mode (PA2 set as alternate)
+	GPIOA->AFRL &= ~(0xFU << 8); //clean alternate function of pin 2
+	GPIOA->AFRL |=(0x7U << 8); //set alternate function of pin 2 as USART2 TX (AF7)
 	USART2->BRR |= (0x8BU << 0); //setup baudrate 16MHz/115200Bd=139->0x8B
 	USART2->CR1 |= (1U << 3); //enable Transmitter
 	USART2->CR1 |= (1U << 0); //enable USART
@@ -105,6 +97,19 @@ void usart2_transmit(const unsigned char *data)
   while (!(USART2->ISR & (1U << 6))); //transmission complete flag check
 }
 
+void i2c1_init(void)
+{
+  RCC->APB1ENR1 |= (1U << 21); //enable peripheral clock for I2C1
+  RCC->CCIPR &= ~(3U << 12);  //clear selected as I2C1 clock
+  RCC->CCIPR |= (1U << 12); //HSI16 clock selected as I2C1 clock
+  GPIOB->MODER &= ~(0xFU << (8 * 2)); //MODE8 and MODE9 clean
+  GPIOB->MODER |=  (0xAU << (8 * 2)); // MODE8 and MODE9 Alternate function mode
+	GPIOB->AFRH &= ~(0xFFU << 0); //clean alternate function of pin B8 and B9
+	GPIOB->AFRH |=(0x44U << 0); //set alternate function of pin B8 and B9 as (I2C AF4)
+  I2C1->CR1 &= (0x1FU << 8); //clear analog and digital filters;
+  I2C1->CR1 |= (0x1U << 8); //set up the digital and analog
+  I2C1->TIMINGR = 0x10320309U; //prescaler 1, scldel 3, sdadel 2, sclH 3, scll 9. configure time delay and clock high and low time
+}
 int main(void) {
     system_clock_config();
     gpio_config();
@@ -117,7 +122,7 @@ int main(void) {
     while (1)
     {
 	delay(1000);
-	GPIOA_BSRR = 1U << 21;
+	GPIOA->BSRR = 1U << 21;
 	usart2_transmit(test_array);
 
     }
