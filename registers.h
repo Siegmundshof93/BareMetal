@@ -52,6 +52,9 @@ typedef struct {
 } I2C_Typedef;
 
 #define I2C1 ((volatile I2C_Typedef *) 0x40005400U)
+#define FASTSPEED 0x10320309U
+
+
 
 typedef struct {
   unsigned int MODER;
