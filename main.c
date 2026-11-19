@@ -32,7 +32,7 @@ void system_clock_config(void)
 
 void gpio_config(void)
 {
-  RCC->AHB2ENR |= (1U << 0) | (1U << 2); // Enable Clocks for GPIOA (bit 0) and GPIOC (bit 2)
+  RCC->AHB2ENR |= (1U << 0) | (1U << 2) | (1U <<1); // Enable Clocks for GPIOA (bit 0), GPIOB and GPIOC (bit 2)
 
   GPIOA->MODER &= ~(3U << (5 * 2)); //PA5 pin input mode erase
   GPIOA->MODER |=  (1U << (5 * 2)); // PA5 Output mode
@@ -102,24 +102,24 @@ void i2c1_init(void)
 {
   RCC->APB1ENR1 |= (1U << 21); //enable peripheral clock for I2C1
   RCC->CCIPR &= ~(3U << 12);  //clear selected as I2C1 clock
-  RCC->CCIPR |= (1U << 12); //HSI16 clock selected as I2C1 clock
+  RCC->CCIPR |= (1U << 12); //HSI16 clock selected as I2C1 clock (SYS CLOCK)
   GPIOB->MODER &= ~(0xFU << (8 * 2)); //MODE8 and MODE9 clean
   GPIOB->MODER |=  (0xAU << (8 * 2)); // MODE8 and MODE9 Alternate function mode
 	GPIOB->AFRH &= ~(0xFFU << 0); //clean alternate function of pin B8 and B9
 	GPIOB->AFRH |=(0x44U << 0); //set alternate function of pin B8 and B9 as (I2C AF4)
   GPIOB->PUPDR &= ~(0xFU << (8 * 2)); //clear the pins PB8 and PB9
-  GPIOB->PUPDR =| (0x5U << (8*2)); //set pins PB8 and PB9 as pull-up
-  I2C1->CR1 &= ~(0x1FU << 8); //clear analog and digital filters;
-  I2C1->CR1 |= (0x1U << 8); //set up the digital and analog
+  GPIOB->PUPDR |= (0x5U << (8 * 2)); //set pins PB8 and PB9 as pull-up
+  GPIOB->OTYPER |= (1U << 8) | (1U << 9); //set pins 8 and 9 as Open drain
+  I2C1->CR1 &= ~(0x1U << 0); //disable I2C
+  I2C1->CR1 &= ~(0x1FU << 8); //enable analog and clear disable digital filters;
   I2C1->TIMINGR = FASTSPEED; //prescaler 1, scldel 3, sdadel 2, sclH 3, scll 9. configure time delay and clock high and low time
-  I2C1->CR1 |= (0x3U << 1); // TX and RX interrupt enable
   I2C1->CR1 |= (0x1U << 0); //enable I2C
   I2C1->CR2 &= ~(0x1U << 11); //setup address for 7 bit
   I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
   I2C1->CR2 |= (0x23 << 1); //0x23 Address for the light sensor
   I2C1->CR2 &= ~(0x1U << 10); //set as a write transfer
   I2C1->CR2 &= ~(0xFFU << 16); //Clear number of send/receive bytes
-  I2C1->CR2 &= ~(0x1U << 16); //send/receive 1 byte NBYTES
+  I2C1->CR2 |= (0x1U << 16); //send/receive 1 byte NBYTES
   I2C1->CR2 |= (0x1U << 25); //Autoend enable stop after NBYTES are sent
   I2C1->CR2 &= ~(0x1U << 24); //RELOAD The transfer is completed after the NBYTES data transfer
 }
@@ -127,9 +127,10 @@ void i2c1_init(void)
 void i2c1_transmit(void)
 {
 I2C1->CR2 |= (0x1U << 13); //I2C START
-while(!(I2C1->ISR & (0x1U <<1))); //wait until the 
+while(!(I2C1->ISR & (0x1U << 1))); //wait until the
 I2C1->TXDR = 0XAAU;
-while(!(I2C1->ISR & (0x1U <<1)));
+while(!(I2C1->ISR & (0x1U << 5)));
+I2C1->ICR |= (0x1U << 5); //Clear STOP
 }
 
 void i2c_data_transfer(void)
