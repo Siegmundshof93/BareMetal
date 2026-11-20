@@ -115,22 +115,45 @@ void i2c1_init(void)
   I2C1->TIMINGR = FASTSPEED; //prescaler 1, scldel 3, sdadel 2, sclH 3, scll 9. configure time delay and clock high and low time
   I2C1->CR1 |= (0x1U << 0); //enable I2C
   I2C1->CR2 &= ~(0x1U << 11); //setup address for 7 bit
-  I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
-  I2C1->CR2 |= (0x23 << 1); //0x23 Address for the light sensor
-  I2C1->CR2 &= ~(0x1U << 10); //set as a write transfer
-  I2C1->CR2 &= ~(0xFFU << 16); //Clear number of send/receive bytes
-  I2C1->CR2 |= (0x1U << 16); //send/receive 1 byte NBYTES
   I2C1->CR2 |= (0x1U << 25); //Autoend enable stop after NBYTES are sent
   I2C1->CR2 &= ~(0x1U << 24); //RELOAD The transfer is completed after the NBYTES data transfer
 }
 
 void i2c1_transmit(void)
 {
+//transmit setup
+I2C1->CR2 &= ~(0x1U << 10); // controller request a write function
+I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
+I2C1->CR2 |= (0x23 << 1); //0x23 Address for the light sensor
+I2C1->CR2 &= ~(0xFFU << 16); //Clear number of send/receive bytes
+I2C1->CR2 |= (0x1U << 16); //send/receive 1 byte NBYTES
+//start transmit
 I2C1->CR2 |= (0x1U << 13); //I2C START
-while(!(I2C1->ISR & (0x1U << 1))); //wait until the
-I2C1->TXDR = 0XAAU;
+while(!(I2C1->ISR & (0x1U << 1))); //wait until the TXDR is empty
+I2C1->TXDR = 0X10U;
 while(!(I2C1->ISR & (0x1U << 5)));
 I2C1->ICR |= (0x1U << 5); //Clear STOP
+}
+
+ i2c_receive(unsigned char receive_8)
+{
+  //transmit setup
+  I2C1->CR2 |= (0x1U << 10); // controller request a read function
+  I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
+  I2C1->CR2 |= (0x23 << 1); //0x23 Address for the light sensor
+  I2C1->CR2 &= ~(0xFFU << 16); //Clear number of send/receive bytes
+  I2C1->CR2 |= (0x2U << 16); //send/receive 2 bytes NBYTES
+  //start transmit
+  I2C1->CR2 |= (0x1U << 13); //I2C START
+  while(!(I2C1->ISR & (0x1U << 2))); //wait until the RXDR is full
+  receive_8[0] = I2C1->RXDR;
+  while(!(I2C1->ISR & (0x1U << 2))); //wait until the RXDR is full
+  receive_8[1] = I2C1->RXDR;
+  while(!(I2C1->ISR & (0x1U << 5)));
+  I2C1->ICR |= (0x1U << 5); //Clear STOP
+
+  unsigned short receive_16 = ((uisigned short*) receive_8[0]) | (receive_8[1] << 8);
+  return
 }
 
 void i2c_data_transfer(void)
