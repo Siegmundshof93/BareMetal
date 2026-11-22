@@ -83,9 +83,9 @@ void usart2_init(void)
 
 }
 
-void usart2_transmit(const unsigned char *data)
+void usart2_transmit(unsigned char *data, const unsigned char size)
 {
-	for(unsigned char i=0; i<5; i++)
+	for(unsigned char i=0; i<size; i++)
 	{
 	USART2->TDR = data[i] + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
 	while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
@@ -112,7 +112,7 @@ void i2c1_init(void)
   GPIOB->OTYPER |= (1U << 8) | (1U << 9); //set pins 8 and 9 as Open drain
   I2C1->CR1 &= ~(0x1U << 0); //disable I2C
   I2C1->CR1 &= ~(0x1FU << 8); //enable analog and clear disable digital filters;
-  I2C1->TIMINGR = FASTSPEED; //prescaler 1, scldel 3, sdadel 2, sclH 3, scll 9. configure time delay and clock high and low time
+  I2C1->TIMINGR = STANDARDSPEED; //prescaler 1, scldel 3, sdadel 2, sclH 3, scll 9. configure time delay and clock high and low time
   I2C1->CR1 |= (0x1U << 0); //enable I2C
   I2C1->CR2 &= ~(0x1U << 11); //setup address for 7 bit
   I2C1->CR2 |= (0x1U << 25); //Autoend enable stop after NBYTES are sent
@@ -126,18 +126,21 @@ I2C1->CR2 &= ~(0x1U << 10); // controller request a write function
 I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
 I2C1->CR2 |= (address << 1); //0x23 Address for the light sensor
 I2C1->CR2 &= ~(0xFFU << 16); //Clear number of send/receive bytes
-I2C1->CR2 |= ((number_bytes) << 16); //send/receive 1 byte NBYTES
+I2C1->CR2 |= ((number_bytes) << 16); //send/receive n byte NBYTES
 //start transmit
 I2C1->CR2 |= (0x1U << 13); //I2C START
-while(!(I2C1->ISR & (0x1U << 1))); //wait until the TXDR is empty
-I2C1->TXDR = send_byte;
+  for (unsigned char i = 0; i < number_bytes; i++)
+  {
+    while(!(I2C1->ISR & (0x1U << 1))); //wait until the TXDR is empty
+    I2C1->TXDR = send_byte;
+  }
 while(!(I2C1->ISR & (0x1U << 5)));
 I2C1->ICR |= (0x1U << 5); //Clear STOP
 }
 
-unsigned short i2c1_receive(const unsigned char address, const unsigned char number_bytes)
+void i2c1_receive(const unsigned char address, unsigned char* receive_8, const unsigned char number_bytes)
 {
-  volatile unsigned char receive_8[10];
+
   //transmit setup
   I2C1->CR2 |= (0x1U << 10); // controller request a read function
   I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
@@ -146,41 +149,45 @@ unsigned short i2c1_receive(const unsigned char address, const unsigned char num
   I2C1->CR2 |= ((number_bytes) << 16); //send/receive 2 bytes NBYTES
   //start transmit
   I2C1->CR2 |= (0x1U << 13); //I2C START
-  while(!(I2C1->ISR & (0x1U << 2))); //wait until the RXDR is full
-  receive_8[0] = I2C1->RXDR & 0xFF;
-  while(!(I2C1->ISR & (0x1U << 2))); //wait until the RXDR is full
-  receive_8[1] = I2C1->RXDR & 0xFF;
+
+    for (unsigned char i = 0; i < number_bytes; i++) {
+      while(!(I2C1->ISR & (0x1U << 2))); //wait until the RXDR is full
+      receive_8[i] = I2C1->RXDR & 0xFF;
+    }
+
   while(!(I2C1->ISR & (0x1U << 5)));
   I2C1->ICR |= (0x1U << 5); //Clear STOP
 
- unsigned short receive_16 = ((unsigned short) receive_8[0]) << 8 | (receive_8[1]);
-  return receive_16;
 }
 
 
 int main(void) {
-	const unsigned char address = 0x23;
-	const unsigned char config_value = 0x10;
-	unsigned short read_value;
+	static const unsigned char address = 0x23;
+	static const unsigned char config_value = 0x10;
+  unsigned char receive_8[2] = {0};
+  static unsigned char lux_value;
+
 
     system_clock_config();
     gpio_config();
     interrupt_init();
     usart2_init();
-	i2c1_init();
-	i2c1_transmit(address, config_value, 1);
+	  i2c1_init();
+	  i2c1_transmit(address, config_value, 1);
 
     while (1)
     {
-		
-	delay(1000);
+
+	delay(300);
 	GPIOA->BSRR = 1U << 21;
-		
-	
-	read_value = i2c1_receive(address, 2);	
-	
-	usart2_transmit(TODO);
-	
+
+
+	i2c1_receive(address, receive_8, 2);
+  lux_value = receive_8[1];
+//unsigned char receive_val = (unsigned short)receive_8[0] << 8 | receive_8[1];
+
+	usart2_transmit(&lux_value, 1);
+
 
     }
 }
