@@ -53,7 +53,7 @@ typedef struct {
 
 #define I2C1 ((volatile I2C_Typedef *) 0x40005400U)
 #define FASTSPEED 0x10320309U
-
+#define STANDARDSPEED 0x30420F13U
 
 
 typedef struct {
@@ -71,8 +71,8 @@ typedef struct {
   unsigned int ASCR;
 } GPIO_Typedef;
 
-#define GPIOA ((volatile I2C_Typedef *) 0x48000000U)
-#define GPIOB ((volatile I2C_Typedef *) 0x48000400U)
-#define GPIOC ((volatile I2C_Typedef *) 0x48000800U)
+#define GPIOA ((volatile GPIO_Typedef *) 0x48000000U)
+#define GPIOB ((volatile GPIO_Typedef *) 0x48000400U)
+#define GPIOC ((volatile GPIO_Typedef *) 0x48000800U)
 
 #endif
