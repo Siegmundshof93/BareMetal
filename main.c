@@ -83,73 +83,151 @@ void usart2_init(void)
 
 }
 
-void usart2_transmit(unsigned char *data, const unsigned char size)
+void usart2_transmit(const unsigned char *data, const unsigned char size)
 {
 
 	for(unsigned char i=0; i<size; i++)
 	{
-
-    USART2->TDR = data[i] + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
     while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+    USART2->TDR = data[i]; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
 	}
-	USART2->TDR = 0x0D;   //return (\r)
+  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+  USART2->TDR = 0x0D;   //return (\r)
   while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
   USART2->TDR = 0x0A;  //newline (\n)
   while (!(USART2->ISR & (1U << 6))); //transmission complete flag check
 }
 
 
-void usart2_transmit_char_minicom(unsigned char *data_8)
+void usart2_transmit_uint8t_minicom(unsigned char data_8)
 {
   unsigned char three;
   unsigned char two;
-  unsigned one;
+  unsigned char one;
 
-    if(data_8 < 0xA)
+    if(data_8 < 10)
     {
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = data_8 + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-    	while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
     }
-    else if(data_8 > 0xA && data_8 < 0x64)
+    else if(data_8 > 9 && data_8 < 100)
     {
       two = data_8 / 10;
       one = data_8 % 10;
 
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-  	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
     }
     else
     {
       three = data_8 / 100;
-      *data_8 = data_8 % 100;
+      data_8 = data_8 % 100;
       two = data_8 / 10;
       one = data_8 % 10;
 
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = three + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-    	while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
     }
 
-
-	USART2->TDR = 0x0D;   //return (\r)
+  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+  USART2->TDR = 0x0D;   //return (\r)
   while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
   USART2->TDR = 0x0A;  //newline (\n)
   while (!(USART2->ISR & (1U << 6))); //transmission complete flag check
 }
 
 
-void usart_transition_func(unsigned short *value_16)
+void usart2_transmit_unit16t_minicom(unsigned short data_16)
 {
   unsigned char five;
   unsigned char four;
   unsigned char three;
   unsigned char two;
   unsigned char one;
+	
+if(data_16 < 10)
+    {
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = data_16 + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+    }
+    else if(data_16 > 9 && data_16 < 100)
+    {
+      two = data_16 / 10;
+      one = data_16 % 10;
+
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+  	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+    }
+    else if(data_16 > 99 && data_16 < 1000)
+    {
+      three = data_16 / 100;
+      data_16 = data_16 % 100;
+      two = data_16 / 10;
+      one = data_16 % 10;
+
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = three + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+    } 
+	else if(data_16 >999 && data_16 < 10000)
+	{
+	  four = data_16 / 1000;
+	  data_16 = data_16 % 1000;
+	  three = data_16 / 100;
+      data_16 = data_16 % 100;
+      two = data_16 / 10;
+      one = data_16 % 10;
+		
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  USART2->TDR = four + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  USART2->TDR = three + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+
+	}
+	else 
+	{
+	  five = data_16 / 10000;
+	  data_16 = data_16 % 10000;
+	  four = data_16 / 1000;
+	  data_16 = data_16 % 1000;
+	  three = data_16 / 100;
+      data_16 = data_16 % 100;
+      two = data_16 / 10;
+      one = data_16 % 10;	
+
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  USART2->TDR = five + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  USART2->TDR = four + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+	  USART2->TDR = three + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
+      while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+      USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string	
+	}
+
+
+  USART2->TDR = 0x0D;   //return (\r)
+  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
+  USART2->TDR = 0x0A;  //newline (\n)
+  while (!(USART2->ISR & (1U << 6))); //transmission complete flag check
+}
 
 }
 
