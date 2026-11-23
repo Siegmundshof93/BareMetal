@@ -150,7 +150,7 @@ void usart2_transmit_unit16t_minicom(unsigned short data_16)
   unsigned char three;
   unsigned char two;
   unsigned char one;
-	
+
 if(data_16 < 10)
     {
 	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
@@ -179,7 +179,7 @@ if(data_16 < 10)
       USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
       while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
-    } 
+    }
 	else if(data_16 >999 && data_16 < 10000)
 	{
 	  four = data_16 / 1000;
@@ -188,7 +188,7 @@ if(data_16 < 10)
       data_16 = data_16 % 100;
       two = data_16 / 10;
       one = data_16 % 10;
-		
+
 	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
 	  USART2->TDR = four + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
 	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
@@ -199,7 +199,7 @@ if(data_16 < 10)
       USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
 
 	}
-	else 
+	else
 	{
 	  five = data_16 / 10000;
 	  data_16 = data_16 % 10000;
@@ -208,7 +208,7 @@ if(data_16 < 10)
 	  three = data_16 / 100;
       data_16 = data_16 % 100;
       two = data_16 / 10;
-      one = data_16 % 10;	
+      one = data_16 % 10;
 
 	  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
 	  USART2->TDR = five + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
@@ -219,15 +219,14 @@ if(data_16 < 10)
       while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
       USART2->TDR = two + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
       while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
-      USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string	
+      USART2->TDR = one + '0'; //register for sending a data (only 8 bits) +'0' or + 48 means send the ascii string
 	}
 
-
-  USART2->TDR = 0x0D;   //return (\r)
-  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
-  USART2->TDR = 0x0A;  //newline (\n)
   while (!(USART2->ISR & (1U << 6))); //transmission complete flag check
-}
+  USART2->TDR = 0x0D;   //return (\r)
+    while (!(USART2->ISR & (1U << 6))); //transmission complete flag check
+  USART2->TDR = 0x0A;  //newline (\n)
+  while (!(USART2->ISR & (1U << 7))); //wait until the TX register is empty
 
 }
 
@@ -281,7 +280,7 @@ void i2c1_receive(const unsigned char address, unsigned char* receive_8, const u
   I2C1->CR2 &= ~(0x1FFU << 0); //clear the address
   I2C1->CR2 |= (address << 1); //set address
   I2C1->CR2 &= ~(0xFFU << 16); //Clear number of send/receive bytes
-  I2C1->CR2 |= ((number_bytes) << 16); //send/receive 2 bytes NBYTES
+  I2C1->CR2 |= (number_bytes << 16); //send/receive 2 bytes NBYTES
   //start transmit
   I2C1->CR2 |= (0x1U << 13); //I2C START
 
@@ -300,7 +299,7 @@ int main(void) {
 	static const unsigned char address = 0x23;
 	static const unsigned char config_value = 0x10;
   unsigned char receive_8[2] = {0};
-  //static unsigned char lux_value;
+  static unsigned short lux_value;
 
 
     system_clock_config();
@@ -318,11 +317,11 @@ int main(void) {
 
 
 	i2c1_receive(address, receive_8, 2);
-//  lux_value = receive_8[0];
-unsigned short receive_val = ((unsigned short)receive_8[0] << 8 | receive_8[1]) / 1.2;
+
+ lux_value = ((unsigned short)receive_8[0] << 8 | receive_8[1]);
 
 
-	usart2_transmit_minicom(receive_8, 2);
+usart2_transmit_unit16t_minicom(lux_value);
 
 
     }
