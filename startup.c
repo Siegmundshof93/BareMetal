@@ -2,7 +2,9 @@ typedef void (*function_ptr)(void);
 
 extern unsigned int _sidata, _sdata, _edata, _sbss, _ebss;
 int main(void);
+
 void EXTI15_10_IRQHandler(void);
+void USART2_IRQHandler(void);
 
 void Reset_Handler(void) {
     // Copy data segment from flash to RAM
@@ -41,7 +43,7 @@ function_ptr vector_table[] = {
     0,                        // 13: Reserved
     Default_Handler,          // 14: PendSV
     Default_Handler,          // 15: SysTick
-    
+
     // IRQs 0 to 39 placeholders
     Default_Handler, Default_Handler, Default_Handler, Default_Handler,
     Default_Handler, Default_Handler, Default_Handler, Default_Handler,
@@ -52,8 +54,12 @@ function_ptr vector_table[] = {
     Default_Handler, Default_Handler, Default_Handler, Default_Handler,
     Default_Handler, Default_Handler, Default_Handler, Default_Handler,
     Default_Handler, Default_Handler, Default_Handler, Default_Handler,
-    Default_Handler, Default_Handler, Default_Handler, Default_Handler,
-    
+    Default_Handler, Default_Handler,
+
+    USART2_IRQHandler, // USART2 (IRQ38)
+
+    Default_Handler,
+
     // Index 56 (IRQ 40)
     EXTI15_10_IRQHandler      // 56: EXTI Line[15:10]
 };

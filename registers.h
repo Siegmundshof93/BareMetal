@@ -75,4 +75,17 @@ typedef struct {
 #define GPIOB ((volatile GPIO_Typedef *) 0x48000400U)
 #define GPIOC ((volatile GPIO_Typedef *) 0x48000800U)
 
+typedef struct {
+  unsigned int ISER0;
+  unsigned int ISER1;
+  unsigned int ISER2;
+  unsigned int ISER3;
+  unsigned int ISER4;
+  unsigned int ISER5;
+  unsigned int ISER6;
+  unsigned int ISER7;
+} NVIC_Typedef;
+
+#define NVIC ((volatile NVIC_Typedef *) 0xE000E100U)
+
 #endif

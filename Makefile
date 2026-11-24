@@ -10,7 +10,7 @@ LDFLAGS = $(CPU) -Tstm32l476rg.ld -nostdlib -lgcc
 
 all: $(TARGET).bin
 
-$(TARGET).elf: main.o startup.o
+$(TARGET).elf: main.o startup.o i2c.o usart.o
 	$(LD) $(LDFLAGS) $^ -o $@
 
 %.o: %.c
